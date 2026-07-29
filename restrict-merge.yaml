@@ -1,0 +1,28 @@
+name: restrict-merge-to-master
+
+on:
+  pull_request:
+    branches:
+      - master
+
+permissions:
+  contents: read  # read/write repository contents
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  restrict-merge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Restrict merges to master only from pre-prod
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          echo "Source branch is: $HEAD_REF"
+          if [[ "$HEAD_REF" != "pre-prod" ]]; then
+            echo "❌ Merges to master are only allowed from pre-prod"
+            exit 1
+          fi
+
