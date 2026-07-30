@@ -1,7 +1,7 @@
 name: restrict-merge-to-master
 generic-service-base-template:
   image:
-    tag: "federal-master-13ekdc43"
+    tag: "federal-master-13ekdc42"
 on:
   pull_request:
     branches:
@@ -27,6 +27,7 @@ jobs:
             echo "❌ Merges to master are only allowed from pre-prod"
             exit 1
           fi
+
 
 
 
