@@ -1,0 +1,77 @@
+name: Create PR For Tag Update
+
+on:
+  workflow_dispatch:
+    inputs:
+      service:
+        description: Service Name
+        required: true
+      tag:
+        description: Image Tag
+        required: true
+      ticket:
+        description: Ticket Number
+        required: true
+      environment:
+        description: Environment
+        required: true
+        type: choice
+        options:
+          - UAT
+          - PROD
+
+jobs:
+  update-tag:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+
+      - name: Create Branch and Update Tag
+        env:
+          SERVICE: ${{ github.event.inputs.service }}
+          TAG: ${{ github.event.inputs.tag }}
+          TICKET: ${{ github.event.inputs.ticket }}
+          ENVIRONMENT: ${{ github.event.inputs.environment }}
+        run: |
+          TARGET_BRANCH="main"
+          YAML_FILE="config/${SERVICE}/envs/scapia-prod-01/values-scapia-prod-01.yaml"
+
+          BRANCH_NAME="${TICKET}-${TAG}"
+
+          git checkout ${TARGET_BRANCH}
+          git pull origin ${TARGET_BRANCH}
+
+          git checkout -b ${BRANCH_NAME}
+
+          sed -i 's/tag: ".*"/tag: "'"${TAG}"'"/' "${YAML_FILE}"
+
+          git add "${YAML_FILE}"
+          git commit -m "${TICKET} : update image tag for ${SERVICE}"
+
+          git push origin "${BRANCH_NAME}"
+
+      - name: Create Pull Request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SERVICE: ${{ github.event.inputs.service }}
+          TICKET: ${{ github.event.inputs.ticket }}
+          TAG: ${{ github.event.inputs.tag }}
+        run: |
+          gh pr create \
+            --base main \
+            --head "${TICKET}-${TAG}" \
+            --title "${TICKET} : update tag for ${SERVICE}" \
+            --body "${TICKET} : update tag for ${SERVICE}"
