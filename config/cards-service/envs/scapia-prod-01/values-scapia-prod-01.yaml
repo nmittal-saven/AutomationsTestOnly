@@ -1,7 +1,7 @@
 name: restrict-merge-to-master
 generic-service-base-template:
   image:
-    tag: "federal-master-175r3yg3"
+    tag: "federal-master-73fs2hn82"
 on:
   pull_request:
     branches:
