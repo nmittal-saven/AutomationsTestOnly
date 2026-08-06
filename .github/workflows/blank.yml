@@ -63,15 +63,20 @@ jobs:
 
           git push origin "${BRANCH_NAME}"
 
-      - name: Create Pull Request
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          SERVICE: ${{ github.event.inputs.service }}
-          TICKET: ${{ github.event.inputs.ticket }}
-          TAG: ${{ github.event.inputs.tag }}
-        run: |
-          gh pr create \
-            --base main \
-            --head "${TICKET}-${TAG}" \
-            --title "${TICKET} : update tag for ${SERVICE}" \
-            --body "${TICKET} : update tag for ${SERVICE}"
+      - name: Create or Update Pull Request
+        if: env.NO_CHANGES != 'true'
+        id: cpr
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "${{ github.event.inputs.ticket }} : update image tag for ${{ github.event.inputs.service }}"
+          branch: ${{ env.BRANCH_NAME }}
+          base: master
+          delete-branch: false
+          title: "${{ github.event.inputs.ticket }} : update tag for ${{ github.event.inputs.service }}"
+          body: |
+            Automated tag update
+      
+            Ticket: ${{ github.event.inputs.ticket }}
+            Service: ${{ github.event.inputs.service }}
+            Tag: ${{ github.event.inputs.tag }}
