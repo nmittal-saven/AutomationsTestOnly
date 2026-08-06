@@ -62,6 +62,7 @@ jobs:
           git commit -m "${TICKET} : update image tag for ${SERVICE}"
 
           git push origin "${BRANCH_NAME}"
+          echo "BRANCH_NAME=${BRANCH_NAME}" >> $GITHUB_ENV
 
       - name: Create or Update Pull Request
         if: env.NO_CHANGES != 'true'
@@ -71,7 +72,6 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: "${{ github.event.inputs.ticket }} : update image tag for ${{ github.event.inputs.service }}"
           branch: ${{ env.BRANCH_NAME }}
-          base: master
           delete-branch: false
           title: "${{ github.event.inputs.ticket }} : update tag for ${{ github.event.inputs.service }}"
           body: |
