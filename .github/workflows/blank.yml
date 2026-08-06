@@ -12,13 +12,6 @@ on:
       ticket:
         description: Ticket Number
         required: true
-      environment:
-        description: Environment
-        required: true
-        type: choice
-        options:
-          - UAT
-          - PROD
 
 jobs:
   update-tag:
@@ -39,17 +32,24 @@ jobs:
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
 
+      - name: Install GitHub CLI
+        run: |
+          sudo apt-get update
+          sudo apt-get install gh -y
+
       - name: Create Branch and Update Tag
         env:
           SERVICE: ${{ github.event.inputs.service }}
           TAG: ${{ github.event.inputs.tag }}
           TICKET: ${{ github.event.inputs.ticket }}
-          ENVIRONMENT: ${{ github.event.inputs.environment }}
         run: |
+          set -e
+
           TARGET_BRANCH="main"
           YAML_FILE="config/${SERVICE}/envs/scapia-prod-01/values-scapia-prod-01.yaml"
-
           BRANCH_NAME="${TICKET}-${TAG}"
+
+          echo "BRANCH_NAME=${BRANCH_NAME}" >> $GITHUB_ENV
 
           git checkout ${TARGET_BRANCH}
           git pull origin ${TARGET_BRANCH}
@@ -62,21 +62,29 @@ jobs:
           git commit -m "${TICKET} : update image tag for ${SERVICE}"
 
           git push origin "${BRANCH_NAME}"
-          echo "BRANCH_NAME=${BRANCH_NAME}" >> $GITHUB_ENV
 
-      - name: Create or Update Pull Request
-        if: env.NO_CHANGES != 'true'
-        id: cpr
-        uses: peter-evans/create-pull-request@v7
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "${{ github.event.inputs.ticket }} : update image tag for ${{ github.event.inputs.service }}"
-          branch: ${{ env.BRANCH_NAME }}
-          delete-branch: false
-          title: "${{ github.event.inputs.ticket }} : update tag for ${{ github.event.inputs.service }}"
-          body: |
-            Automated tag update
-      
-            Ticket: ${{ github.event.inputs.ticket }}
-            Service: ${{ github.event.inputs.service }}
-            Tag: ${{ github.event.inputs.tag }}
+      - name: Create Pull Request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SERVICE: ${{ github.event.inputs.service }}
+          TAG: ${{ github.event.inputs.tag }}
+          TICKET: ${{ github.event.inputs.ticket }}
+        run: |
+          PR_URL=$(gh pr create \
+            --base main \
+            --head "${BRANCH_NAME}" \
+            --title "${TICKET} : update tag for ${SERVICE}" \
+            --body "Automated tag update
+
+          Ticket: ${TICKET}
+          Service: ${SERVICE}
+          Tag: ${TAG}")
+
+          echo "PR_URL=${PR_URL}" >> $GITHUB_ENV
+          echo "Created PR: ${PR_URL}"
+
+      - name: Workflow Summary
+        if: always()
+        run: |
+          echo "Branch Name : ${BRANCH_NAME}"
+          echo "PR URL      : ${PR_URL}"
