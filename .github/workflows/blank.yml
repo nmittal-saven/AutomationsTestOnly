@@ -102,7 +102,7 @@ jobs:
           to: nayan.mittal@saven.in
           from: GitHub Actions <${{ secrets.SMTP_USERNAME }}>
  
-          body: ${{ env.EMAIL_BODY }}
+          body: ${{ github.event.inputs.EMAIL_BODY }}
  
           secure: false
           
