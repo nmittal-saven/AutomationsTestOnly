@@ -82,7 +82,27 @@ jobs:
 
           echo "PR_URL=${PR_URL}" >> $GITHUB_ENV
           echo "Created PR: ${PR_URL}"
-
+      
+      - name: Set Date
+        run: |
+          echo "TODAY_DATE=$(date +'%d-%b-%Y')" >> $GITHUB_ENV
+ 
+      - name: Send Email
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: ${{ secrets.SMTP_SERVER }}
+          server_port: ${{ secrets.SMTP_PORT }}
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+ 
+          subject: "Deployment report cards-service - ${{ env.TODAY_DATE }}"
+          to: nayan.mittal@saven.in
+          from: GitHub Actions <${{ secrets.SMTP_USERNAME }}>
+ 
+          body: ${{ env.EMAIL_BODY }}
+ 
+          secure: false
+          
       - name: Workflow Summary
         if: always()
         run: |
