@@ -99,7 +99,15 @@ jobs:
           password: ${{ secrets.SMTP_PASSWORD }}
  
           subject: "Deployment report cards-service - ${{ env.TODAY_DATE }}"
-          to: nayan.mittal@saven.in
+
+          to: |
+            alurmohammed.yaseer@saven.in,
+            nandu.puppala@saven.in
+      
+          cc: |
+            alekhya.pasala@saven.in,
+            nayan.mittal@saven.in
+
           from: GitHub Actions <${{ secrets.SMTP_USERNAME }}>
  
           body: ${{ github.event.inputs.EMAIL_BODY }}
