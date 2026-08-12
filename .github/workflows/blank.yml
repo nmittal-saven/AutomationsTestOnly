@@ -12,6 +12,9 @@ on:
       ticket:
         description: Ticket Number
         required: true
+      email_body:
+        description: Email Body
+        required: true
 
 jobs:
   update-tag:
