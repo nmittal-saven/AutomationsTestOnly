@@ -111,9 +111,14 @@ jobs:
           msg["Cc"] = "alekhya.pasala@saven.in,nayan.mittal@saven.in"
       
           msg.set_content(os.environ["EMAIL_BODY"])
-      
+
+          print("HOST:", os.environ["SMTP_HOST"])
+          print("PORT:", os.environ["SMTP_PORT"])
+
           with smtplib.SMTP(os.environ["SMTP_HOST"], int(os.environ["SMTP_PORT"])) as server:
+              server.ehlo()
               server.starttls()
+              server.ehlo()
               server.login(
                   os.environ["SMTP_USERNAME"],
                   os.environ["SMTP_PASSWORD"]
