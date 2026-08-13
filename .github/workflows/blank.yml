@@ -89,30 +89,39 @@ jobs:
       - name: Set Date
         run: |
           echo "TODAY_DATE=$(date +'%d-%b-%Y')" >> $GITHUB_ENV
- 
+
       - name: Send Email
-        uses: dawidd6/action-send-mail@v3
-        with:
-          server_address: ${{ secrets.SMTP_SERVER }}
-          server_port: ${{ secrets.SMTP_PORT }}
-          username: ${{ secrets.SMTP_USERNAME }}
-          password: ${{ secrets.SMTP_PASSWORD }}
- 
-          subject: "Deployment report cards-service - ${{ env.TODAY_DATE }}"
-
-          to: |
-            alurmohammed.yaseer@saven.in,
-            nandu.puppala@saven.in
+        env:
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USERNAME: ${{ secrets.SMTP_USERNAME }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          EMAIL_BODY: ${{ github.event.inputs.email_body }}
+          TODAY_DATE: ${{ env.TODAY_DATE }}
+        run: |
+          python3 << 'EOF'
+          import os
+          import smtplib
+          from email.message import EmailMessage
       
-          cc: |
-            alekhya.pasala@saven.in,
-            nayan.mittal@saven.in
-
-          from: GitHub Actions <${{ secrets.SMTP_USERNAME }}>
- 
-          body: ${{ github.event.inputs.EMAIL_BODY }}
- 
-          secure: false
+          msg = EmailMessage()
+          msg["Subject"] = f"Deployment report cards-service - {os.environ['TODAY_DATE']}"
+          msg["From"] = f"GitHub Actions <{os.environ['SMTP_USERNAME']}>"
+          msg["To"] = "alurmohammed.yaseer@saven.in,nandu.puppala@saven.in"
+          msg["Cc"] = "alekhya.pasala@saven.in,nayan.mittal@saven.in"
+      
+          msg.set_content(os.environ["EMAIL_BODY"])
+      
+          with smtplib.SMTP(os.environ["SMTP_HOST"], int(os.environ["SMTP_PORT"])) as server:
+              server.starttls()
+              server.login(
+                  os.environ["SMTP_USERNAME"],
+                  os.environ["SMTP_PASSWORD"]
+              )
+              server.send_message(msg)
+      
+          print("Email sent successfully")
+          EOF
           
       - name: Workflow Summary
         if: always()
